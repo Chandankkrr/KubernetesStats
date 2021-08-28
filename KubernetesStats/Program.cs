@@ -10,14 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KubernetesStats
 {
-    class Options
-    {
-        [Option("resource",
-            Default = ResourceType.Services,
-            HelpText = "K8s resource type")]
-        public ResourceType ResourceFlag { get; set; }
-    }
-
     class Program
     {
         private static ServiceProvider _serviceProvider;
@@ -26,7 +18,7 @@ namespace KubernetesStats
         {
             ConfigureServices();
 
-            Parser.Default.ParseArguments<Options>(args)
+            Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(RunOptions);
         }
 
@@ -36,29 +28,48 @@ namespace KubernetesStats
 
             services.AddHttpClient("K8sClient", client =>
             {
-                client.BaseAddress = new Uri("https://kubernetes.docker.internal:6443/");
+                client.BaseAddress =
+                    new Uri("https://kubernetes.docker.internal:6443/");
                 client.DefaultRequestHeaders.Add("Authorization", $"bearer {Constants.Token}");
             }).ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
             {
                 // TODO remove
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
             });
-            
+
             services.AddMediatR(Assembly.GetExecutingAssembly());
-            
+
             _serviceProvider = services.BuildServiceProvider();
         }
 
-        private static void RunOptions(Options opts)
+        private static void RunOptions(CommandLineOptions opts)
         {
             var mediator = _serviceProvider.GetService<IMediator>();
 
-            var getServicesQuery = new GetServicesQuery
+            var resourceType = opts.ResourceFlag;
+
+            object query = resourceType switch
             {
-                ResourceType = opts.ResourceFlag
+                ResourceType.Services => new GetServicesQuery
+                {
+                    Namespace = opts.NamespaceFlag
+                },
+                ResourceType.Pods => new GetPodsQuery
+                {
+                    Namespace = opts.NamespaceFlag
+                },
+                _ => throw new ArgumentException("Invalid enum value for command", nameof(resourceType))
             };
 
-            Task.Run(async () => await mediator!.Send(getServicesQuery)).Wait();
+            try
+            {
+                Task.Run(async () => await mediator!.Send(query)).Wait();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace KubernetesStats.Models
+namespace KubernetesStats.Models.Service
 {
     public class ServiceInfo
     {
@@ -142,7 +142,7 @@ namespace KubernetesStats.Models
         public LoadBalancer FProvider { get; set; }
 
         [JsonProperty("f:k8s-app", NullValueHandling = NullValueHandling.Ignore)]
-        public LoadBalancer FK8SApp { get; set; }
+        public LoadBalancer Fk8SApp { get; set; }
 
         [JsonProperty("f:kubernetes.io/cluster-service", NullValueHandling = NullValueHandling.Ignore)]
         public LoadBalancer FKubernetesIoClusterService { get; set; }
@@ -207,7 +207,7 @@ namespace KubernetesStats.Models
     {
         [JsonProperty(".")] public LoadBalancer Empty { get; set; }
 
-        [JsonProperty("f:k8s-app")] public LoadBalancer FK8SApp { get; set; }
+        [JsonProperty("f:k8s-app")] public LoadBalancer Fk8SApp { get; set; }
     }
 
     public class Spec
@@ -268,19 +268,19 @@ namespace KubernetesStats.Models
     public static class Serialize
     {
         public static string ToJson(this Services self) =>
-            JsonConvert.SerializeObject((object?)self, (JsonSerializerSettings?)Converter.Settings);
+            JsonConvert.SerializeObject(self, Converter.Settings);
     }
 
     internal static class Converter
     {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        public static readonly JsonSerializerSettings Settings = new()
         {
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
             DateParseHandling = DateParseHandling.None,
             Converters =
             {
                 new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
+            }
         };
     }
 
@@ -313,7 +313,7 @@ namespace KubernetesStats.Models
             serializer.Serialize(writer, value.ToString());
         }
 
-        public static readonly PurpleParseStringConverter Singleton = new PurpleParseStringConverter();
+        public static readonly PurpleParseStringConverter Singleton = new();
     }
 
     internal class FluffyParseStringConverter : JsonConverter
@@ -346,6 +346,6 @@ namespace KubernetesStats.Models
             serializer.Serialize(writer, boolString);
         }
 
-        public static readonly FluffyParseStringConverter Singleton = new FluffyParseStringConverter();
+        public static readonly FluffyParseStringConverter Singleton = new();
     }
 }

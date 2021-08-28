@@ -2,7 +2,7 @@
 
 using Newtonsoft.Json;
 
-namespace KubernetesStats.Models
+namespace KubernetesStats.Models.Server
 {
     public class ServerInfo
     {
@@ -23,10 +23,5 @@ namespace KubernetesStats.Models
 
         [JsonProperty("serverAddress")]
         public string ServerAddress { get; set; }
-    }
-
-    public class TopLevel
-    {
-        public static TopLevel FromJson(string json) => JsonConvert.DeserializeObject<TopLevel>(json, Converter.Settings);
     }
 }
