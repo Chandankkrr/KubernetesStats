@@ -25,39 +25,28 @@ namespace KubernetesStats.Queries
             var services = await client.ListNamespacedServiceAsync(
                 k8Namespace, cancellationToken: cancellationToken
             );
-
             var serviceItems = services.Items;
-            
+
             if (!serviceItems.Any())
             {
                 AnsiConsole.WriteLine($"No services found in {k8Namespace} namespace");
                 return Unit.Value;
             }
 
-            var grid = new Grid { Expand = false }
-                .GenerateColumns(7)
-                .AddRow("NAMESPACE", "NAME", "TYPE", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)", "AGE");
+            var data = serviceItems.Select(p => new { p.Metadata, p.Spec })
+                .Select(d => new[]
+                {
+                    d.Metadata.NamespaceProperty,
+                    d.Metadata.Name,
+                    d.Spec.Type,
+                    d.Spec.ClusterIP,
+                    string.Join(",", d.Spec.ExternalIPs?.Select(e => e) ?? new []{"<none>"}),
+                    string.Join(",", d.Spec.Ports.Select(p => $"{p.TargetPort.Value}/{p.Protocol}")),
+                    $"{(DateTime.UtcNow - d.Metadata.ManagedFields?[0]?.Time)?.Hours.ToString() ?? "0"}h"
+                }).ToList();
 
-            foreach (var resultItem in serviceItems)
-            {
-                var metadata = resultItem.Metadata;
-                var spec = resultItem.Spec;
-                var age = (DateTime.UtcNow - metadata!.ManagedFields?[0]?.Time)?.Hours.ToString();
-
-                grid.AddRow(metadata.NamespaceProperty, metadata.Name, spec.Type, spec.ClusterIP, "<none>",
-                    string.Join(",", spec.Ports.Select(p => $"{p.TargetPort.Value}/{p.Protocol}")),
-                    $"{(age != null ? $"{age}h" : "-")}");
-            }
-
-            var output = new Panel(grid)
-                .Header("---K8s Cluster, Services Info---", Justify.Center)
-                .BorderStyle(new Style(Color.NavajoWhite1, decoration: Decoration.Italic))
-                .BorderColor(Color.Orange3)
-                .Padding(1, 1, 1, 1)
-                .RoundedBorder();
-
-            AnsiConsole.WriteLine();
-            AnsiConsole.Render(output);
+            var columnHeaders = new[] { "NAMESPACE", "NAME", "TYPE", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)", "AGE" };
+            ConsoleRenderer.Render(columnHeaders, data, "Services Info");
 
             return Unit.Value;
         }

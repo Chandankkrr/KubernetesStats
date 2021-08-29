@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,7 +23,10 @@ namespace KubernetesStats.Queries
             var client = new Kubernetes(config);
             var k8Namespace = request.Namespace;
 
-            var pods = await client.ListNamespacedPodAsync(k8Namespace, cancellationToken: cancellationToken);
+            var pods = await client.ListNamespacedPodAsync(
+                k8Namespace,
+                cancellationToken: cancellationToken
+            );
             var podItems = pods.Items;
 
             if (!podItems.Any())
@@ -31,31 +35,19 @@ namespace KubernetesStats.Queries
                 return Unit.Value;
             }
 
-            var grid = new Grid { Expand = false }
-                .GenerateColumns(6)
-                .AddRow("NAMESPACE", "NAME", "READY", "STATUS", "RESTARTS", "AGE");
+            var data = podItems.Select(p => new { p.Metadata, p.Spec, p.Status })
+                .Select(d => new[]
+                {
+                    d.Metadata.NamespaceProperty,
+                    d.Metadata.Name,
+                    "1/1",
+                    d.Status.Phase,
+                    d.Status.ContainerStatuses[0].RestartCount.ToString(),
+                    $"{(DateTime.UtcNow - d.Metadata!.ManagedFields?[0]?.Time)?.Hours.ToString() ?? "0"}h"
+                }).ToList();
 
-            foreach (var resultItem in podItems)
-            {
-                var metadata = resultItem.Metadata;
-                var status = resultItem.Status;
-
-                var age = (DateTime.UtcNow - metadata!.ManagedFields?[0]?.Time)?.Hours.ToString();
-
-                grid.AddRow(metadata!.NamespaceProperty, metadata.Name, "1/1", status.Phase,
-                    status.ContainerStatuses[0].RestartCount.ToString(),
-                    $"{(age != null ? $"{age}h" : "-")}");
-            }
-
-            var output = new Panel(grid)
-                .Header("---K8s Cluster, Pods Info---", Justify.Center)
-                .BorderStyle(new Style(Color.NavajoWhite1, decoration: Decoration.Italic))
-                .BorderColor(Color.Orange3)
-                .Padding(1, 1, 1, 1)
-                .RoundedBorder();
-
-            AnsiConsole.WriteLine();
-            AnsiConsole.Render(output);
+            var columnHeaders = new[] { "NAMESPACE", "NAME", "READY", "STATUS", "RESTARTS", "AGE" };
+            ConsoleRenderer.Render(columnHeaders, data, "Pods Info");
 
             return Unit.Value;
         }
