@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using CommandLine;
@@ -25,18 +24,6 @@ namespace KubernetesStats
         private static void ConfigureServices()
         {
             var services = new ServiceCollection();
-
-            services.AddHttpClient("K8sClient", client =>
-            {
-                client.BaseAddress =
-                    new Uri("https://kubernetes.docker.internal:6443/");
-                client.DefaultRequestHeaders.Add("Authorization", $"bearer {Constants.Token}");
-            }).ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
-            {
-                // TODO remove
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-            });
-
             services.AddMediatR(Assembly.GetExecutingAssembly());
 
             _serviceProvider = services.BuildServiceProvider();

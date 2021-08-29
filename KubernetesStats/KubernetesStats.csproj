@@ -7,6 +7,7 @@
 
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.9.0-preview1" />
+      <PackageReference Include="KubernetesClient" Version="6.0.1" />
       <PackageReference Include="MediatR" Version="9.0.0" />
       <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0-preview.7.21377.19" />
