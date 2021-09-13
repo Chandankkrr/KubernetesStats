@@ -22,9 +22,8 @@ namespace KubernetesStats.Extension
             }
             
             var output = new Panel(grid)
-                .Header($"---K8s Cluster, ${resourceName}---", Justify.Center)
-                .BorderStyle(new Style(Color.NavajoWhite1))
-                .BorderColor(Color.Orange3)
+                .Header($"---K8s :spouting_whale: Cluster, {resourceName}---", Justify.Center)
+                .BorderColor(Color.Green)
                 .Padding(1, 1, 1, 1)
                 .RoundedBorder();
 

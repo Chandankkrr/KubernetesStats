@@ -38,12 +38,12 @@ namespace KubernetesStats.Queries
             var data = podItems.Select(p => new { p.Metadata, p.Spec, p.Status })
                 .Select(d => new[]
                 {
-                    d.Metadata.NamespaceProperty,
-                    d.Metadata.Name,
-                    "1/1",
-                    d.Status.Phase,
-                    d.Status.ContainerStatuses[0].RestartCount.ToString(),
-                    $"{(DateTime.UtcNow - d.Metadata!.ManagedFields?[0]?.Time)?.Hours.ToString() ?? "0"}h"
+                    $"[dodgerblue1]{d.Metadata.NamespaceProperty}[/]",
+                    $"[aquamarine1]{d.Metadata.Name}[/]",
+                    $"[yellow3_1]1/1[/]",
+                    $"[deeppink2]{d.Status.Phase}[/]",
+                    $"[orangered1]{d.Status.ContainerStatuses[0].RestartCount.ToString()}[/]",
+                    $"[teal]{(DateTime.UtcNow - d.Metadata!.ManagedFields?[0]?.Time)?.Hours.ToString() ?? "0"}h[/]"
                 }).ToList();
 
             var columnHeaders = new[] { "NAMESPACE", "NAME", "READY", "STATUS", "RESTARTS", "AGE" };
